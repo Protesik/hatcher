@@ -20,6 +20,17 @@
 			],
 			"group": "build",
 			"detail": "компилятор: C:\\msys64\\mingw64\\bin\\g++.exe"
+		},
+		{
+			"label": "Хуйня",
+			"command": "${workspaceFolder}/Test.exe",
+			"args": [
+
+			],
+			"group": "build",
+			"options": {
+				"cwd": "${fileDirname}"
+			}
 		}
 	]
 }
