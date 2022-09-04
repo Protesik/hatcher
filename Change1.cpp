@@ -1,5 +1,6 @@
 #include <iostream>
 #include <iomanip>
+#include <conio.h>
 using namespace std;
 
 #define ITOG "Yes"
@@ -66,9 +67,10 @@ string oikk()
 //Цикл for
 string cukl1(int b)
 {
-    int a;
-    for (a = 0; a < b; a++)
-    cout << "a = " << a * a << endl << "Next" << endl;
+    unsigned int a;
+    int hhh = 10;
+    for (a = 0; a < b; a++, --hhh)
+    cout << "b = " << hhh << endl << "Next" << endl;
     for (a = 0; a < b+8; a++)
         {
             cout << "Nugget #" << a << endl;
@@ -77,10 +79,53 @@ string cukl1(int b)
     return ITOG;
 }
 
+//Цикл While
+string cukl2(int gg)
+{
+    int a = 1;
+    while (gg != 0)
+        {
+            cout << gg << endl;
+            gg -= a;
+        }
+    return ITOG;
+}
+
+//Цикл While do
+string cukl3(int gg)
+{
+    int a = 1;
+    do
+        {
+            cout << gg << endl;
+            gg -= a;
+        }
+    while (gg != 0);
+    return ITOG;
+}
+
+string getche11()
+{
+    int a = 0, b=1;
+    char ch = 'y';
+    cout << "Vvedite stroky: ";
+    while (ch != '\r')
+        {
+            ch = getche();
+            if ( ch == ' ' )
+            b++;
+            else
+            a++;
+        }
+    cout <<"\nSlov: " << b << endl
+    << " Bukv: " << a-1 << endl;
+    return ITOG;
+}
+
 int main()
 {
-    int yi = 3;
-    string result = cukl1(yi);
+    int yi = 10;
+    string result = getche11();
     if (result == "Yes") cout << "Da eto tak" << endl;
     else cout << "Ne tak" << endl;
     return 0;
