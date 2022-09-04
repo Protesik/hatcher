@@ -27,7 +27,6 @@
 			"args": [
 
 			],
-			"group": "build",
 			"options": {
 				"cwd": "${fileDirname}"
 			}
