@@ -6,10 +6,14 @@
 #include <stdlib.h>
 #include <time.h>
 #include <vector>
+#include <string> 
 
 using namespace std;
 
-#define ITOG "Yes"
+#define ColorConsolWhite SetConsoleTextAttribute(GetStdHandle(STD_OUTPUT_HANDLE), White)
+
+string CheckKozur(int y, int m);
+string CheckNumber(int num);
 
 struct for_kart
 {
@@ -53,23 +57,22 @@ enum ConsoleColor
         White         = 15
 };
 
-void SetColor1(int text)
+string SetColorOfText(int color, string text)
 {
-   HANDLE hStdOut = GetStdHandle(STD_OUTPUT_HANDLE);
-   SetConsoleTextAttribute(hStdOut, text);
+   SetConsoleTextAttribute(GetStdHandle(STD_OUTPUT_HANDLE), color);
+   return text;
 }
 
 bool kartStart()
 {
+    SetConsoleTextAttribute(GetStdHandle(STD_OUTPUT_HANDLE), Blue);
     char cmdLog = 'a'; 
     while (cmdLog != '\r') 
         {
-            SetColor1 (Blue);
-            cout << "\nStart the game? (y/n) ";
-            SetColor1 (Yellow);   
+            cout << "Start the game? (y/n) "; 
             cmdLog = getche();
             if (cmdLog == 'y') return (1);
-                else if (cmdLog == 'n') {SetColor1 (White); exit(0);}
+                else if (cmdLog == 'n') {ColorConsolWhite; exit(0);}
                     else { system ("cls"); continue;}
         }
     return (0);
@@ -79,62 +82,66 @@ void shuffle (otchet *OtchetFull)
 {
     int temp = 0;
     int randomIndex = 0;
-    for (int i=0; i<36; i++)
+    for (int i=0; i < OtchetFull->KolodaKolvo; i++)
         {
-            randomIndex = rand() % 36;
+            randomIndex = rand() % OtchetFull->KolodaKolvo;
             temp = (OtchetFull->koloda[i]);
             OtchetFull->koloda[i] = OtchetFull->koloda[randomIndex];
             OtchetFull->koloda[randomIndex] = temp;
         }
 }
 
-void InitFirstCardsForPlayers(otchet *OtchetFull)
+void InitFirstCardsForPlayers(otchet *OtchetFull, PlayersCards *AllCards)
 {
-    int i = 0;
+    int i = 0, m = 6;
     OtchetFull->kozur_basa = rand() % 4;
-    OtchetFull->player1 = 6;
-    OtchetFull->player2 = 6;
-    while (i<36)
+    while (i < OtchetFull->KolodaKolvo)
         {
             for (int j = 0; j < 4; j++)
                 {
                     OtchetFull->koloda[i] = i;
-                    OtchetFull->InitCards[i].number = i;
+                    OtchetFull->InitCards[i].number = m;
                     OtchetFull->InitCards[i].mast = j;
                     i++; 
                 }
+            m++;
         }
 }
 
-void CheckCardOfPlayers(otchet *OtchetFull, PlayersCards *AllCards, int P1, int P2)
-{
+void FirstCardOfPlayers(otchet *OtchetFull, PlayersCards *AllCards)
+{  
+    int Kolvo = 35; 
     for (int i = 0; i < OtchetFull->player1; i++)
-        {
-            AllCards->player1[i] = OtchetFull->koloda[OtchetFull->KolodaKolvo-i];
-
-        }
-    for (int i = 0; i < OtchetFull->player2; i++)
-        {
-            AllCards->player1[i] = OtchetFull->koloda[OtchetFull->KolodaKolvo-i];
-
-        }
+        AllCards->player1.push_back(OtchetFull->koloda[Kolvo - i]);
+    Kolvo -= 6;
+    for (int j = 0; j < OtchetFull->player2; j++)
+        AllCards->player2.push_back(OtchetFull->koloda[Kolvo - j]);
+    OtchetFull->KolodaKolvo = Kolvo - 5;
 }
 
-void GameLog()
+void GameLog(otchet *OtchetFull, PlayersCards *AllCards)
 {
-    const int redHeart = 0, redDiamond = 1, blackHeart = 2, blackKrest = 3;
-    system("cls");
+    //const int redHeart = 0, redDiamond = 1, blackHeart = 2, blackKrest = 3;
+    //system("cls");
+    int i;
+    string kozur[4] = {"RedHeart", "RedDiamond", "BlackHeart", "BlackKrest"};
+    cout << SetColorOfText( LightGreen, "Your size of cards: = ") << OtchetFull->player1;
+    cout << SetColorOfText( Red, "\tSize of enemy cards: = ") << OtchetFull->player2;
+    cout << SetColorOfText( LightCyan, "\tSize of Colodu: = ") << OtchetFull->KolodaKolvo << SetColorOfText( Yellow, "\tKozur: = ") << kozur[OtchetFull->kozur_basa] << endl;
+    ColorConsolWhite;
+    for (i = 0; i<AllCards->player1.size(); i++)
+        {
+            cout << i+1 << " card - " << CheckNumber(OtchetFull->InitCards[AllCards->player1[i]].number) << " " << kozur[OtchetFull->InitCards[AllCards->player1[i]].mast] << CheckKozur(OtchetFull->InitCards[AllCards->player1[i]].mast, OtchetFull->kozur_basa) << endl;
+            ColorConsolWhite;
+        }
 }
 
 void StartSettingGame(otchet *OtchetFull, PlayersCards *AllCards )
 {
-    int i;
-    InitFirstCardsForPlayers(OtchetFull);
-    /*for (i=0;i<36;i++)
-        cout << "Second : " << OtchetFull->InitCards[i].number << endl;*/
+    InitFirstCardsForPlayers(OtchetFull, AllCards);
     shuffle(OtchetFull);
-    CheckCardOfPlayers(OtchetFull, AllCards, 0, 0);
-    
+    FirstCardOfPlayers(OtchetFull, AllCards);
+    GameLog(OtchetFull, AllCards); 
 }
 
 void kartu1()
@@ -143,31 +150,51 @@ void kartu1()
     otchet OtchetFull;
     PlayersCards AllCards;
     StartSettingGame(&OtchetFull, &AllCards);
-    cout <<OtchetFull.koloda[25]<< endl;
-    
+}
 
+bool ResultOfMath(otchet *OtchetFull, int P1, int P2)
+{
+    if (OtchetFull->InitCards[P1].mast == OtchetFull->InitCards[P2].mast)    
+        if (OtchetFull->InitCards[P1].number > OtchetFull->InitCards[P2].number ) return 1;
+        else return 0;
+    else if (OtchetFull->InitCards[P1].mast == OtchetFull->kozur_basa ) return 1;
+            else return 0;
 }
 
 
+
+string CheckKozur(int y, int m)
+{
+    if (y == m) return SetColorOfText( Green, " Yes");
+    return SetColorOfText( LightRed, " No");
+}
+
+string CheckNumber(int num)
+{
+    switch (num)
+    {
+    case 11:
+        return ("Valet");
+        break;
+    case 12:
+        return ("Dama");
+        break;
+    case 13:
+        return ("King");
+        break;
+    case 14:
+        return ("Tuz");
+        break;
+    default:
+        return (to_string(num));
+        break;
+    }
+}
+
 int main ()
 {
-    //srand(time(NULL));
-    int yy = 56;
-    vector<int> imm;
-    for (int i =0; i<5; i++)
-        {
-        imm.push_back(i);
-        cout << imm[i] << " pervui\n";
-        }
-    cout << "\nFirst Size " << imm.size();
-    imm.push_back(yy);
-    cout << "\nSecond Size " << imm.size();
-    for ( int i = 0; i < imm.size(); i++)
-        cout << "\n vtoru " << imm[i];
-    //int ikk[3] = {3,2,1};
-    //imm.insert(ikk);
-    //for ( int i = 0; i < imm.size(); i++)
-        //cout << "\n tri " <<imm[i];
-    //kartu1();
+    srand(time(NULL));
+    system("cls");
+    kartu1();
     return 0;
 }
