@@ -90,4 +90,10 @@ int main ()
 {
     struct12();
     return 0;
+    /*while (ch != '\r')
+    {
+        ch = getche();
+        if (ch == 'u') exit(0);
+        cout << "\b \b";
+    }*/
 }
