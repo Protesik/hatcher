@@ -21,11 +21,11 @@ struct for_kart
 struct otchet
 {
     int koloda[36];
-    int player1 = 6;
-    int player2 = 6;
     int kozur_basa = 0;
     int KolodaKolvo = 36;
     for_kart InitCards[36];
+    vector<int> PullOfCardsTurn;
+    vector<int> WhichTurnCanUse;
 };
 
 struct PlayersCards
@@ -95,26 +95,13 @@ void shuffle (otchet *OtchetFull)
         }
 }
 
-
-//Присваивания карт игрокам
-void FirstCardOfPlayers(otchet *OtchetFull, PlayersCards *AllCards)
-{  
-    int Kolvo = 35; 
-    for (int i = 0; i < OtchetFull->player1; i++)
-        AllCards->player1.push_back(OtchetFull->koloda[Kolvo - i]);
-    Kolvo -= 6;
-    for (int j = 0; j < OtchetFull->player2; j++)
-        AllCards->player2.push_back(OtchetFull->koloda[Kolvo - j]);
-    OtchetFull->KolodaKolvo = Kolvo - 5;
-}
-
 //Результата математики карт
 bool ResultOfMath(otchet *OtchetFull, int P1, int P2)
 {
     if (OtchetFull->InitCards[P1].mast == OtchetFull->InitCards[P2].mast)    
         if (OtchetFull->InitCards[P1].number > OtchetFull->InitCards[P2].number ) return 1;
-        else return 0;
-    else if (OtchetFull->InitCards[P1].mast == OtchetFull->kozur_basa && OtchetFull->InitCards[P2].mast != OtchetFull->kozur_basa) return 1;
+            else return 0;
+    else if (OtchetFull->InitCards[P1].mast == OtchetFull->kozur_basa) return 1; 
         else return 0;
 }
 
@@ -148,6 +135,49 @@ string CheckNumber(int num)
     }
 }
 
+//Если ход был в ничью, то обоим игрокам восстанавливается карты
+void RefreshCards(otchet *OtchetFull, PlayersCards *AllCards, bool WhoTurn)
+{
+    int i;
+    if (OtchetFull->KolodaKolvo > 0)
+    if (WhoTurn)
+        {
+        for (i = AllCards->player1.size(); i < 6; i++)
+            if (OtchetFull->KolodaKolvo > 0)
+                {
+                    AllCards->player1.push_back(OtchetFull->koloda[OtchetFull->KolodaKolvo]);
+                    OtchetFull->KolodaKolvo -=1;
+                }
+            else break;
+        
+        for (i = AllCards->player2.size(); i < 6; i++)
+            if (OtchetFull->KolodaKolvo > 0)
+                {
+                    AllCards->player2.push_back(OtchetFull->koloda[OtchetFull->KolodaKolvo]);
+                    OtchetFull->KolodaKolvo -=1;
+                }
+            else break;
+        }
+    else 
+        {
+            for (i = AllCards->player2.size(); i < 6; i++)
+            if (OtchetFull->KolodaKolvo > 0)
+                {
+                    AllCards->player2.push_back(OtchetFull->koloda[OtchetFull->KolodaKolvo]);
+                    OtchetFull->KolodaKolvo -=1;
+                }
+            else break;
+
+            for (i = AllCards->player1.size(); i < 6; i++)
+            if (OtchetFull->KolodaKolvo > 0)
+                {
+                    AllCards->player1.push_back(OtchetFull->koloda[OtchetFull->KolodaKolvo]);
+                    OtchetFull->KolodaKolvo -=1;
+                }
+            else break;
+        }
+}
+
 //Инициация первичных карт
 void InitFirstCardsForPlayers(otchet *OtchetFull, PlayersCards *AllCards)
 {
@@ -164,116 +194,259 @@ void InitFirstCardsForPlayers(otchet *OtchetFull, PlayersCards *AllCards)
                 }
             m++;
         }
-
+    OtchetFull->KolodaKolvo--;
     shuffle(OtchetFull);
 
-    int Kolvo = 35; 
-    for (int i = 0; i < OtchetFull->player1; i++)
-        AllCards->player1.push_back(OtchetFull->koloda[Kolvo - i]);
-    Kolvo -= 6;
-    for (int j = 0; j < OtchetFull->player2; j++)
-        AllCards->player2.push_back(OtchetFull->koloda[Kolvo - j]);
-    OtchetFull->KolodaKolvo = Kolvo - 5;
+    for (int i = 0; i < 6; i++)
+    {
+        AllCards->player1.push_back(OtchetFull->koloda[OtchetFull->KolodaKolvo]);
+        OtchetFull->KolodaKolvo--;
+        AllCards->player2.push_back(OtchetFull->koloda[OtchetFull->KolodaKolvo]);
+        OtchetFull->KolodaKolvo--;
+    }
+}
+
+//Может ли карта использоваться в данном ходу
+string ResultOfTurn(otchet *OtchetFull, PlayersCards *AllCards, int Number, int j)
+{
+    if (OtchetFull->PullOfCardsTurn.empty())
+        return SetColorOfText(Green, " Yes");
+    else for(int i = 0; i < OtchetFull->PullOfCardsTurn.size(); i++)
+            if (Number == OtchetFull->InitCards[OtchetFull->PullOfCardsTurn[i]].number) {OtchetFull->WhichTurnCanUse.push_back(j); return SetColorOfText(Green, " Yes");}
+    return SetColorOfText(Red, " No");
 }
 
 //Вывод на экран текущих данных
 void GameLog(otchet *OtchetFull, PlayersCards *AllCards, bool WhoseTurn)
 {
-    //const int redHeart = 0, redDiamond = 1, blackHeart = 2, blackKrest = 3;
     //system("cls");
+    OtchetFull->WhichTurnCanUse.clear(); 
     int i;
-    string kozur[4] = {"RedHeart", "RedDiamond", "BlackHeart", "BlackKrest"};
-    cout << SetColorOfText( LightGreen, "Your size of cards: = ") << OtchetFull->player1;
-    cout << SetColorOfText( Red, "\tSize of enemy cards: = ") << OtchetFull->player2;
+    string kozur[4] = {"-", "--", "---", "----"};
+    cout << SetColorOfText( LightGreen, "Your size of cards: = ") << AllCards->player1.size();
+    cout << SetColorOfText( Red, "\tSize of enemy cards: = ") << AllCards->player2.size();
     cout << SetColorOfText( LightCyan, "\tSize of Colodu: = ") << OtchetFull->KolodaKolvo << SetColorOfText( Yellow, "\tKozur: = ") << kozur[OtchetFull->kozur_basa] << endl;
     ColorConsolWhite;
     for (i = 0; i<AllCards->player1.size(); i++)
         {
-            cout << i+1 << " card - " << CheckNumber(OtchetFull->InitCards[AllCards->player1[i]].number) << " " << SetColorOfText( CheckKozur(OtchetFull->InitCards[AllCards->player1[i]].mast, OtchetFull->kozur_basa), kozur[OtchetFull->InitCards[AllCards->player1[i]].mast]) << endl;
+            cout << i+1 << " card - " << CheckNumber(OtchetFull->InitCards[AllCards->player1[i]].number) << " " << SetColorOfText(CheckKozur(OtchetFull->InitCards[AllCards->player1[i]].mast, OtchetFull->kozur_basa), kozur[OtchetFull->InitCards[AllCards->player1[i]].mast]) << " " << ResultOfTurn(OtchetFull, AllCards, OtchetFull->InitCards[AllCards->player1[i]].number, i) << endl;
+            //SetColorOfText( CheckKozur(OtchetFull->InitCards[AllCards->player1[i]].mast, OtchetFull->kozur_basa), kozur[OtchetFull->InitCards[AllCards->player1[i]].mast])
             ColorConsolWhite;
         }
     if (WhoseTurn != 0)
         cout << SetColorOfText(Green, "\nYour turn. Chouse your card... ");
     else cout << SetColorOfText(Red, "\nNow is turn the enemy. Use your cards for counter the enemy card: ");
     ColorConsolWhite;
+    cout << endl;
+    for (i = 0; i<AllCards->player2.size(); i++)
+        {
+            cout << i+1 << " card - " << CheckNumber(OtchetFull->InitCards[AllCards->player2[i]].number) << " " << SetColorOfText(CheckKozur(OtchetFull->InitCards[AllCards->player2[i]].mast, OtchetFull->kozur_basa), kozur[OtchetFull->InitCards[AllCards->player2[i]].mast]) << " " << endl;
+            //SetColorOfText( CheckKozur(OtchetFull->InitCards[AllCards->player1[i]].mast, OtchetFull->kozur_basa), kozur[OtchetFull->InitCards[AllCards->player1[i]].mast])
+            ColorConsolWhite;
+        }
+    ColorConsolWhite;
 }
 
+//Смотр чем отбивается противник
 int EnemyTurn(vector<int> &result, otchet *OtchetFull, PlayersCards *AllCards)
 {
-    int min = result[0];
-    for (int i = 1; i < result.size()-1; i++)
-        if (min > OtchetFull->InitCards[result[i]].number) exit(0);
-    return (1);
+    int i, min;
+    bool isOneNoKozur;
+    for ( i = 0; i < result.size(); i++)
+        if (OtchetFull->InitCards[AllCards->player2[result[i]]].mast != OtchetFull->kozur_basa)
+            {
+                min = result[i];
+                isOneNoKozur = 1;
+                break;
+            }
+    if (isOneNoKozur)
+        {
+            i++;
+            while (i < result.size())
+            {
+                if (OtchetFull->InitCards[AllCards->player2[result[i]]].mast != OtchetFull->kozur_basa)
+                    if (OtchetFull->InitCards[AllCards->player2[result[i]]].number < OtchetFull->InitCards[AllCards->player2[result[min]]].number)
+                        min = result[i];
+                i++;
+            }
+            return (min);
+        }       
+     else 
+        {
+            min = result[0];
+            for ( i = 1; i < result.size(); i++)
+                if (OtchetFull->InitCards[AllCards->player2[result[i]]].number < OtchetFull->InitCards[AllCards->player2[result[min]]].number)
+                    min = result[i];
+            return (min);
+        } 
 }
 
-
-void PlayerPass(bool PlayerWhoPassed)
+//Игрок пасует
+void PlayerPass(otchet *OtchetFull, PlayersCards *AllCards, bool WhoseTurn)
 {
+    int i;
+    if (WhoseTurn)
+    {
+        for (i = 0; i < OtchetFull->PullOfCardsTurn.size(); i++)
+            AllCards->player2.push_back(OtchetFull->PullOfCardsTurn[i]);
+        
+        for (i = AllCards->player1.size(); i < 6; i++)
+            if (OtchetFull->KolodaKolvo > 0)
+                {
+                    AllCards->player1.push_back(OtchetFull->koloda[OtchetFull->KolodaKolvo]);
+                    OtchetFull->KolodaKolvo -=1;
+                }
+            else break;
+    }
+    else {
+        for (i = 0; i < OtchetFull->PullOfCardsTurn.size(); i++)
+            AllCards->player1.push_back(OtchetFull->PullOfCardsTurn[i]);
 
+        for (i = AllCards->player2.size(); i < 6; i++)
+            if (OtchetFull->KolodaKolvo > 0)
+                {
+                    AllCards->player2.push_back(OtchetFull->koloda[OtchetFull->KolodaKolvo]);
+                    OtchetFull->KolodaKolvo -=1;
+                }
+            else break;
+    }
 }
 
-void ResultOfTurn(otchet *OtchetFull, PlayersCards *AllCards, vector<int> &result)
-{
-                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                     
-}
-
+//Процесс хода
 bool Turn(otchet *OtchetFull, PlayersCards *AllCards, int Choice, bool WhoseTurn)
 {
     int i;
-    vector<int> result;
+    vector<int> NumberOfcards;   
     if (WhoseTurn)
         {
             for (i = 0; i<AllCards->player2.size(); i++)
-                if (ResultOfMath(OtchetFull, AllCards->player1[Choice], AllCards->player2[i])) result.push_back(AllCards->player2[i]);
-            if (result.empty()) PlayerPass(0);
-                else if(result.size() == 1) ResultOfTurn(OtchetFull, AllCards, result);
-                    else EnemyTurn(result, OtchetFull, AllCards);
+                if (ResultOfMath(OtchetFull, AllCards->player2[i], AllCards->player1[Choice])) NumberOfcards.push_back(i);
+            OtchetFull->PullOfCardsTurn.push_back(AllCards->player1[Choice]); 
+            AllCards->player1.erase(AllCards->player1.begin() + Choice); 
+            if (NumberOfcards.empty()) return 0;
+                else if(NumberOfcards.size() == 1) 
+                    {                         
+                        OtchetFull->PullOfCardsTurn.push_back(AllCards->player2[NumberOfcards[0]]);
+                        AllCards->player2.erase(AllCards->player2.begin() + NumberOfcards[0]);
+                        return 1;
+                    }
+                    else 
+                        {
+                            int key = EnemyTurn(NumberOfcards, OtchetFull, AllCards);
+                            OtchetFull->PullOfCardsTurn.push_back(AllCards->player2[key]);
+                            AllCards->player2.erase(AllCards->player2.begin() + key);
+                            return 1;
+                        }
         }
     else 
         {
             for (i = 0; i<AllCards->player1.size(); i++)
                 {
-                if (ResultOfMath(OtchetFull, AllCards->player2[Choice], AllCards->player1[i])) result.push_back(i);
+                if (ResultOfMath(OtchetFull, AllCards->player2[Choice], AllCards->player1[i])) exit(0);
                 }
         }
     
-    return 1;
+    return (WhoseTurn);
+}
+
+//Может ли игрок ходить
+bool CanTurn(otchet *OtchetFull, PlayersCards *AllCards, int Turn)
+{
+    for (int i = 0; i < OtchetFull->WhichTurnCanUse.size(); i++)
+        if (Turn == OtchetFull->WhichTurnCanUse[i]) return 1;
+    return 0;
 }
 
 //Голова программы
 void kartu1()
 {
     int Choice = 0;
-    char YourChoose;
-    bool EndofGame = 1, WhoseTurn = 1, WhoDef = 0;
+    int EndOfTurn1;
+    bool EndofGame = 1, WhoseTurn = 1, WhoDef = 0, IsCanTurn;
     otchet OtchetFull;
     PlayersCards AllCards;
     InitFirstCardsForPlayers(&OtchetFull, &AllCards);
-    GameLog(&OtchetFull, &AllCards, WhoseTurn); 
-    while (!EndofGame)
+    while (EndofGame == 1)
         {
-            do
-                {
-                    cin >> Choice;
-                    if (Choice > 0 && Choice <= AllCards.player1.size()) break;
-                        else {Choice = 0; cout << "\b \b";}
-                } 
-            while (!Choice);
-        
+           EndOfTurn1 = 1; 
+            if (WhoseTurn)
+                do
+                    {
+                        GameLog(&OtchetFull, &AllCards, WhoseTurn);
+                        cin >> Choice;
+                        if (Choice > 0 && Choice <= AllCards.player1.size()) IsCanTurn = Turn(&OtchetFull, &AllCards, Choice - 1, WhoseTurn);
+                            else 
+                                {
+                                    Choice = 0;
+                                    continue;
+                                }
+                        if (IsCanTurn) 
+                        {
+                            do
+                            {
+                                GameLog(&OtchetFull, &AllCards, WhoseTurn);
+                                if (OtchetFull.WhichTurnCanUse.size() > 0)
+                                    {
+                                    cin >> Choice;
+                                    if (Choice > 0 && Choice <= AllCards.player1.size() && CanTurn(&OtchetFull, &AllCards, Choice-1)) IsCanTurn = Turn(&OtchetFull, &AllCards, Choice - 1, WhoseTurn);
+                                        else 
+                                            {
+                                                Choice = 0; 
+                                                continue;
+                                            } 
+                                    }
+                                else 
+                                    {
+                                        RefreshCards(&OtchetFull, &AllCards, WhoseTurn);
+                                        WhoseTurn = 0;
+                                        EndOfTurn1 = 0;
+                                        IsCanTurn = 0;
+                                    }
+                    
+                            } while (IsCanTurn);
+                        }
+                        else 
+                            {
+                                do
+                                {
+                                    GameLog(&OtchetFull, &AllCards, WhoseTurn);
+                                    if (OtchetFull.WhichTurnCanUse.size() > 0)
+                                        {
+                                            cin >> Choice;
+                                            if (Choice > 0 && Choice <= AllCards.player1.size() && CanTurn(&OtchetFull, &AllCards, Choice-1)) 
+                                                {
+                                                    OtchetFull.PullOfCardsTurn.push_back(AllCards.player1[Choice-1]);  
+                                                    AllCards.player1.erase(AllCards.player1.begin() + (Choice-1));
+                                                }
+                                            else 
+                                            {
+                                                Choice = 0; 
+                                                continue;
+                                            } 
+                                        }
+                                    else 
+                                        {
+                                        PlayerPass(&OtchetFull, &AllCards, WhoseTurn);
+                                        WhoseTurn = 1;
+                                        EndOfTurn1 = 0;
+                                        }
+                                } while (EndOfTurn1);
+                            }
+                        OtchetFull.PullOfCardsTurn.clear();
+                    } while (EndOfTurn1);
+            else 
+            {
+                GameLog(&OtchetFull, &AllCards, WhoseTurn);
+                exit(0);
+            }
         }
-    
-}
-
-void jjm(otchet *Ujj)
-{
-
 }
 
 //Главная функция всей программы
 int main ()
 {
     srand(time(NULL));
-    system("cls");
+    //system("cls");
     kartu1();
     return 0;
 }
