@@ -273,10 +273,17 @@ int EnemyTurn(vector<int> &result, otchet *OtchetFull, PlayersCards *AllCards)
         }       
      else 
         {
-            min = result[0];
-            for ( i = 1; i < result.size(); i++)
-                if (OtchetFull->InitCards[AllCards->player2[result[i]]].number < OtchetFull->InitCards[AllCards->player2[result[min]]].number)
-                    min = result[i];
+            for ( i = 0; i < result.size(); i++)
+                if (OtchetFull->InitCards[AllCards->player2[result[i]]].mast == OtchetFull->kozur_basa)
+                    {
+                        min = result[i];
+                        break;
+                    }
+            for ( i++ ; i < result.size(); i++)
+                if (OtchetFull->InitCards[AllCards->player2[result[i]]].mast == OtchetFull->kozur_basa) 
+                    if (OtchetFull->InitCards[AllCards->player2[result[i]]].number < OtchetFull->InitCards[AllCards->player2[result[min]]].number)
+                            min = result[i];
+                        
             return (min);
         } 
 }
@@ -294,7 +301,7 @@ void PlayerPass(otchet *OtchetFull, PlayersCards *AllCards, bool WhoseTurn)
             if (OtchetFull->KolodaKolvo > 0)
                 {
                     AllCards->player1.push_back(OtchetFull->koloda[OtchetFull->KolodaKolvo]);
-                    OtchetFull->KolodaKolvo -=1;
+                    OtchetFull->KolodaKolvo--;
                 }
             else break;
     }
@@ -306,7 +313,7 @@ void PlayerPass(otchet *OtchetFull, PlayersCards *AllCards, bool WhoseTurn)
             if (OtchetFull->KolodaKolvo > 0)
                 {
                     AllCards->player2.push_back(OtchetFull->koloda[OtchetFull->KolodaKolvo]);
-                    OtchetFull->KolodaKolvo -=1;
+                    OtchetFull->KolodaKolvo--;
                 }
             else break;
     }
@@ -362,7 +369,7 @@ void kartu1()
 {
     int Choice = 0;
     int EndOfTurn1;
-    bool EndofGame = 1, WhoseTurn = 1, WhoDef = 0, IsCanTurn;
+    bool EndofGame = 1, WhoseTurn = 1, WhoDef = 0, EnemyCanTurn;
     otchet OtchetFull;
     PlayersCards AllCards;
     InitFirstCardsForPlayers(&OtchetFull, &AllCards);
@@ -374,13 +381,13 @@ void kartu1()
                     {
                         GameLog(&OtchetFull, &AllCards, WhoseTurn);
                         cin >> Choice;
-                        if (Choice > 0 && Choice <= AllCards.player1.size()) IsCanTurn = Turn(&OtchetFull, &AllCards, Choice - 1, WhoseTurn);
+                        if (Choice > 0 && Choice <= AllCards.player1.size()) EnemyCanTurn = Turn(&OtchetFull, &AllCards, Choice - 1, WhoseTurn);
                             else 
                                 {
                                     Choice = 0;
                                     continue;
                                 }
-                        if (IsCanTurn) 
+                        if (EnemyCanTurn) 
                         {
                             do
                             {
@@ -388,7 +395,7 @@ void kartu1()
                                 if (OtchetFull.WhichTurnCanUse.size() > 0)
                                     {
                                     cin >> Choice;
-                                    if (Choice > 0 && Choice <= AllCards.player1.size() && CanTurn(&OtchetFull, &AllCards, Choice-1)) IsCanTurn = Turn(&OtchetFull, &AllCards, Choice - 1, WhoseTurn);
+                                    if (Choice > 0 && Choice <= AllCards.player1.size() && CanTurn(&OtchetFull, &AllCards, Choice-1)) EnemyCanTurn = Turn(&OtchetFull, &AllCards, Choice - 1, WhoseTurn);
                                         else 
                                             {
                                                 Choice = 0; 
@@ -400,12 +407,11 @@ void kartu1()
                                         RefreshCards(&OtchetFull, &AllCards, WhoseTurn);
                                         WhoseTurn = 0;
                                         EndOfTurn1 = 0;
-                                        IsCanTurn = 0;
                                     }
                     
-                            } while (IsCanTurn);
+                            } while (EnemyCanTurn);
                         }
-                        else 
+                        if (!EnemyCanTurn) 
                             {
                                 do
                                 {
@@ -427,7 +433,6 @@ void kartu1()
                                     else 
                                         {
                                         PlayerPass(&OtchetFull, &AllCards, WhoseTurn);
-                                        WhoseTurn = 1;
                                         EndOfTurn1 = 0;
                                         }
                                 } while (EndOfTurn1);
