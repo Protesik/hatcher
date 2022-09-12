@@ -219,13 +219,13 @@ string ResultOfTurn(otchet *OtchetFull, PlayersCards *AllCards, int Number, int 
 //Вывод на экран текущих данных
 void GameLog(otchet *OtchetFull, PlayersCards *AllCards, bool WhoseTurn)
 {
-    //system("cls");
+    system("cls");
     OtchetFull->WhichTurnCanUse.clear(); 
     int i;
-    string kozur[4] = {"-", "--", "---", "----"};
+    string kozur[4] = {"Heart Red", "Heart Black", "Booby", "Cross"};
     cout << SetColorOfText( LightGreen, "Your size of cards: = ") << AllCards->player1.size();
     cout << SetColorOfText( Red, "\tSize of enemy cards: = ") << AllCards->player2.size();
-    cout << SetColorOfText( LightCyan, "\tSize of Colodu: = ") << OtchetFull->KolodaKolvo << SetColorOfText( Yellow, "\tKozur: = ") << kozur[OtchetFull->kozur_basa] << endl;
+    cout << SetColorOfText( LightCyan, "\tSize of Colodu: = ") << OtchetFull->KolodaKolvo+1 << SetColorOfText( Yellow, "\tKozur: = ") << kozur[OtchetFull->kozur_basa] << endl;
     ColorConsolWhite;
     for (i = 0; i<AllCards->player1.size(); i++)
         {
@@ -248,7 +248,7 @@ void GameLog(otchet *OtchetFull, PlayersCards *AllCards, bool WhoseTurn)
 }
 
 //Смотр чем отбивается противник
-int EnemyTurn(vector<int> &result, otchet *OtchetFull, PlayersCards *AllCards)
+int EnemyTurn(vector<int> result, otchet *OtchetFull, PlayersCards *AllCards)
 {
     int i, min;
     bool isOneNoKozur;
@@ -441,8 +441,12 @@ void kartu1()
                     } while (EndOfTurn1);
             else 
             {
-                GameLog(&OtchetFull, &AllCards, WhoseTurn);
-                exit(0);
+                do
+                {
+                    
+                    GameLog(&OtchetFull, &AllCards, WhoseTurn);
+                    exit(0);
+                } while (EndOfTurn1);
             }
         }
 }
